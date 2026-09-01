@@ -1,6 +1,6 @@
 {
   "name": "Plano Alimentar — Nina",
-  "short_name": "Plano",
+  "short_name": "Plano da Nina",
   "description": "Plano alimentar, lista de compras, guia de marcas e tabelas de porções.",
   "start_url": "./index.html",
   "scope": "./",
