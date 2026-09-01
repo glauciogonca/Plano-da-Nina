@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Plano</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#132420">
+<meta name="color-scheme" content="light">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Plano">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light;
+  --ink:#132420; --ink-2:#2C4038; --paper:#EDF0EA; --card:#FFFFFF; --line:#D2DAD2;
+  --green:#2F6B4C; --green-soft:#E7F0E9; --gold:#A9781C; --sage:#5C7D6B; --clay:#8A3A2E;
+  --muted:#67786D; --shade:#E1E8E1;
+  --tab-h:58px;
+  --safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{background:var(--ink);}
+html,body{margin:0;padding:0;height:100%;background:var(--ink);overflow:hidden;overscroll-behavior:none;}
+body{color:var(--ink);font-family:"Source Sans 3",system-ui,-apple-system,sans-serif;
+  font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;}
+button{font-family:inherit;border:none;background:none;color:inherit;cursor:pointer;padding:0;}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px;}
+
+.app{height:100%;display:flex;flex-direction:column;background:var(--paper);}
+
+.topbar{flex:0 0 auto;background:var(--ink);color:var(--paper);
+  padding:calc(min(var(--safe-t),60px) + 12px) 18px 12px;}
+.topbar-row{display:flex;align-items:center;gap:12px;}
+.today{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:#8CA394;}
+.viewtitle{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:21px;
+  letter-spacing:-.015em;margin:2px 0 0;}
+.daywrap{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:5px;}
+.daywrap[hidden]{display:none;}
+.daylbl{font-family:"IBM Plex Mono",monospace;font-size:8.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:#7A907F;line-height:1;padding-right:4px;}
+.daytoggle{display:flex;background:rgba(255,255,255,.10);border-radius:100px;padding:3px;}
+.daytoggle button{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.04em;
+  text-transform:uppercase;padding:7px 11px;border-radius:100px;color:#8CA394;white-space:nowrap;
+  transition:background .16s,color .16s;}
+.daytoggle button[aria-pressed="true"]{background:var(--gold);color:#fff;font-weight:600;}
+
+main{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--paper);
+  overscroll-behavior:contain;padding:18px 18px 28px;}
+.view{display:none;}
+.view.active{display:block;animation:fade .22s ease;}
+@keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+.tabbar{flex:0 0 66px;height:66px;box-sizing:border-box;overflow:hidden;
+  display:grid;grid-template-columns:repeat(5,1fr);align-content:start;
+  background:var(--ink);padding:30px 0 0;box-shadow:0 -1px 0 rgba(255,255,255,.08);}
+.tabbar button{position:relative;min-width:0;padding:0 1px;height:36px;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  gap:2px;color:#7A907F;transition:color .16s;}
+.tabbar button[aria-current="page"]{color:var(--gold);}
+.tabbar svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto;}
+.tabbar span{font-size:9.5px;letter-spacing:-.01em;font-weight:600;white-space:nowrap;
+  line-height:1;max-width:100%;overflow:hidden;text-overflow:ellipsis;}
+@media (max-width:340px){ .tabbar span{font-size:8.5px;} }
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:12px;}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--gold);font-weight:600;}
+.eyebrow.q{color:var(--muted);}
+
+.card.now{background:var(--green);color:#fff;border-color:var(--green);padding:24px 22px;
+  box-shadow:0 6px 20px -8px rgba(47,107,76,.5);}
+.card.now .eyebrow{color:rgba(255,255,255,.82);}
+.card.now h2{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:30px;
+  line-height:1.05;letter-spacing:-.025em;margin:8px 0 4px;}
+.card.now .when{font-family:"IBM Plex Mono",monospace;font-size:13px;color:rgba(255,255,255,.86);}
+.card.now .btn{background:#fff;color:var(--green);font-weight:800;}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+  background:var(--green);color:#fff;font-weight:700;font-size:15px;padding:14px;border-radius:10px;
+  margin-top:18px;}
+.btn:active{filter:brightness(.92);}
+.btn.quiet{background:var(--card);border:1px solid var(--line);color:var(--ink);
+  font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.08em;
+  text-transform:uppercase;font-weight:600;padding:14px;margin-top:6px;}
+
+.next{display:flex;align-items:center;gap:11px;padding:13px 6px 15px;
+  border-bottom:1px solid var(--line);margin:2px 0 14px;width:100%;text-align:left;}
+.next .k{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted);}
+.next .t{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--muted);}
+.next .n{font-weight:600;font-size:15px;color:var(--ink-2);}
+.trainrow{display:flex;align-items:center;gap:11px;padding:13px 6px 15px;
+  border-bottom:1px solid var(--line);margin:2px 0 12px;width:100%;text-align:left;}
+.trainrow .t{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--muted);}
+.trainrow .n{font-weight:600;font-size:15px;color:var(--ink-2);}
+.trainrow .k{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted);margin-left:auto;}
+
+.mealrow{display:flex;align-items:center;gap:14px;width:100%;text-align:left;
+  background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:16px 18px;margin-bottom:10px;transition:border-color .16s,transform .1s;}
+.mealrow:active{transform:scale(.985);}
+.mealrow.now-row{background:var(--green-soft);border-color:var(--green);
+  border-left:5px solid var(--green);padding-left:14px;}
+.mealrow .time{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;
+  color:var(--ink);background:var(--shade);padding:6px 8px;border-radius:6px;flex:0 0 auto;}
+.mealrow.now-row .time{background:var(--green);color:#fff;}
+.mealrow .body{flex:1;min-width:0;}
+.mealrow .body b{display:block;font-size:16.5px;font-weight:700;}
+.mealrow .body span{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);}
+.mealrow .chev{color:var(--muted);flex:0 0 auto;}
+.tagnow{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:9px;
+  letter-spacing:.12em;text-transform:uppercase;background:var(--green);color:#fff;
+  padding:2px 6px;border-radius:4px;margin-left:7px;vertical-align:1px;}
+
+.sheet{position:fixed;top:0;right:0;bottom:0;left:0;z-index:60;background:var(--paper);
+  display:flex;flex-direction:column;transform:translateY(100%);
+  transition:transform .28s cubic-bezier(.32,.72,0,1);}
+.sheet.open{transform:none;}
+.sheet-head{flex:0 0 auto;background:var(--ink);color:var(--paper);
+  padding:calc(min(var(--safe-t),60px) + 10px) 16px 14px;display:flex;align-items:center;gap:12px;}
+.sheet-head .back{display:flex;align-items:center;gap:6px;font-size:15px;color:#8CA394;padding:6px 4px;}
+.sheet-head .back svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;}
+.sheet-head h2{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:17px;
+  margin:0;letter-spacing:-.01em;}
+.sheet-body{flex:1;overflow-y:auto;padding:18px 18px 60px;}
+
+h3.sec{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:18px;
+  margin:22px 0 10px;letter-spacing:-.01em;}
+h3.sec:first-child{margin-top:0;}
+.lede{color:var(--muted);font-size:14.5px;margin:0 0 16px;}
+
+.opt{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:16px 18px;margin-bottom:10px;}
+.opt h4{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:16.5px;
+  margin:0 0 10px;display:flex;align-items:center;gap:9px;}
+.opt h4 .n{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;color:#fff;
+  background:var(--green);width:22px;height:22px;border-radius:6px;flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center;}
+.opt ul{list-style:none;margin:0;padding:0;}
+.opt li{position:relative;padding-left:16px;margin-bottom:8px;font-size:15px;line-height:1.5;}
+.opt li::before{content:"";position:absolute;left:0;top:9px;width:5px;height:5px;
+  border-radius:50%;background:var(--sage);}
+.opt li b{font-weight:700;}
+.opt li .q{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--muted);}
+
+.orsep{display:flex;align-items:center;gap:12px;margin:4px 0 12px;}
+.orsep::before,.orsep::after{content:"";flex:1;height:1px;background:var(--line);}
+.orsep span{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--muted);}
+
+.acc{border:1px solid var(--line);border-radius:12px;background:var(--card);
+  margin-top:10px;overflow:hidden;}
+.acc summary{list-style:none;display:flex;align-items:center;gap:10px;padding:14px 16px;
+  cursor:pointer;font-weight:600;font-size:14.5px;}
+.acc summary::-webkit-details-marker{display:none;}
+.acc summary .ico{width:22px;height:22px;border-radius:6px;flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center;
+  font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;color:#fff;}
+.acc summary .plus{margin-left:auto;color:var(--muted);font-size:19px;line-height:1;
+  transition:transform .2s;font-family:"IBM Plex Mono",monospace;}
+.acc[open] summary .plus{transform:rotate(45deg);}
+.acc .inner{padding:0 16px 16px;font-size:14.5px;color:var(--ink-2);line-height:1.6;}
+.acc .inner b{color:var(--ink);}
+.acc.why .ico{background:var(--gold);}
+.acc.prep .ico{background:var(--green);}
+.acc.warn .ico{background:var(--clay);}
+.acc.warn summary{color:var(--clay);}
+
+table{width:100%;border-collapse:collapse;font-size:15px;margin-top:4px;}
+th{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);font-weight:500;text-align:left;padding:0 6px 8px 0;border-bottom:1px solid var(--line);}
+th.n,td.n{text-align:right;padding-right:0;white-space:nowrap;font-variant-numeric:tabular-nums;}
+td{padding:10px 6px 10px 0;border-bottom:1px solid #EBEFEA;vertical-align:top;}
+td.n{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--ink-2);}
+th.n,td.n{padding-left:20px;}
+tr:last-child td{border-bottom:none;}
+
+.grp{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:16px 18px;margin-bottom:10px;}
+.grp.full{border-color:var(--green);background:var(--green-soft);}
+.grp h3{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--green);margin:0 0 12px;display:flex;align-items:center;}
+.grp.full h3{color:var(--muted);}
+.grp h3 .c{margin-left:auto;font-size:10px;color:var(--muted);letter-spacing:.04em;}
+.grp ul{list-style:none;margin:0;padding:0;}
+.grp label{display:flex;gap:12px;align-items:flex-start;padding:9px 0;cursor:pointer;font-size:15.5px;}
+.grp input{appearance:none;width:21px;height:21px;flex:0 0 21px;margin-top:1px;
+  border:1.5px solid var(--muted);border-radius:6px;background:#fff;position:relative;transition:.14s;}
+.grp input:checked{background:var(--green);border-color:var(--green);}
+.grp input:checked::after{content:"";position:absolute;left:7px;top:3px;width:5px;height:10px;
+  border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg);}
+.grp input:checked + span{text-decoration:line-through;color:var(--muted);}
+.qty{display:block;font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--muted);margin-top:2px;}
+
+.menu{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:12px;}
+.menu button{display:flex;align-items:center;gap:14px;width:100%;text-align:left;
+  padding:16px 18px;border-bottom:1px solid #EBEFEA;font-size:16px;font-weight:600;}
+.menu button:last-child{border-bottom:none;}
+.menu button:active{background:var(--shade);}
+.menu .sub{display:block;font-weight:400;font-size:13px;color:var(--muted);margin-top:2px;}
+.menu .chev{margin-left:auto;color:var(--muted);}
+.menu .body{flex:1;min-width:0;}
+
+.search{width:100%;padding:13px 15px;border:1px solid var(--line);border-radius:11px;
+  font-size:16px;background:#fff;color:var(--ink);margin-bottom:14px;}
+.search:focus{outline:none;border-color:var(--green);}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;}
+.chip{font-family:"IBM Plex Mono",monospace;font-size:11px;background:var(--shade);
+  color:var(--ink-2);padding:5px 10px;border-radius:100px;}
+.chip.a{background:var(--green-soft);color:var(--green);}
+.chip.b{background:#F4EBD6;color:var(--gold);}
+.chip.c{background:#F3DFDA;color:var(--clay);}
+
+.foot{margin-top:26px;padding-top:18px;border-top:1px solid var(--line);
+  font-size:12.5px;color:var(--muted);line-height:1.6;}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="topbar">
+    <div class="topbar-row">
+      <div>
+        <div class="today" id="todayLabel">—</div>
+        <h1 class="viewtitle" id="viewTitle">Hoje</h1>
+      </div>
+      <div class="daywrap" id="dayWrap">
+        <span class="daylbl" id="dayLbl">Hoje tem treino</span>
+        <div class="daytoggle" role="group" aria-labelledby="dayLbl">
+          <button data-day="treino" aria-pressed="true">sim</button>
+          <button data-day="descanso" aria-pressed="false">não</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="view active" id="v-agora"></section>
+    <section class="view" id="v-refeicoes"></section>
+    <section class="view" id="v-compras"></section>
+    <section class="view" id="v-marcas"></section>
+    <section class="view" id="v-guia"></section>
+  </main>
+
+  <nav class="tabbar" role="tablist">
+    <button data-go="agora" aria-current="page">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      <span>Hoje</span>
+    </button>
+    <button data-go="refeicoes">
+      <svg viewBox="0 0 24 24"><path d="M4 4v7a3 3 0 0 0 6 0V4M7 11v9M17 4c-1.7 0-3 2.2-3 5s1.3 4 3 4v6"/></svg>
+      <span>Refeições</span>
+    </button>
+    <button data-go="compras">
+      <svg viewBox="0 0 24 24"><path d="M6 6h15l-1.5 8.5a2 2 0 0 1-2 1.5H9a2 2 0 0 1-2-1.6L5.2 4H3"/><circle cx="9.5" cy="20" r="1.3"/><circle cx="17.5" cy="20" r="1.3"/></svg>
+      <span>Compras</span>
+    </button>
+    <button data-go="marcas">
+      <svg viewBox="0 0 24 24"><path d="M20.6 13.4 12 22l-9-9V3h10z"/><circle cx="7.5" cy="7.5" r="1.3"/></svg>
+      <span>Marcas</span>
+    </button>
+    <button data-go="guia">
+      <svg viewBox="0 0 24 24"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H19v16H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M8 8h7M8 12h7"/></svg>
+      <span>Guia</span>
+    </button>
+  </nav>
+</div>
+
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="sheet-head">
+    <button class="back" id="sheetBack">
+      <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg> Voltar
+    </button>
+    <h2 id="sheetTitle"></h2>
+  </div>
+  <div class="sheet-body" id="sheetBody"></div>
+</div>
+
+<script>
+"use strict";
+
+const DB = {
+  get(k, fb){ try{ const v = localStorage.getItem('nutri.'+k); return v===null?fb:JSON.parse(v); }catch(e){ return fb; } },
+  set(k, v){ try{ localStorage.setItem('nutri.'+k, JSON.stringify(v)); }catch(e){} }
+};
+
+/* ===================== REFEIÇÕES ===================== */
+
+const CAFE = {
+  id:'cafe', time:'08:30', min:510, name:'Café da manhã', tag:'três opções',
+  opcoes:[
+    { t:'Omelete, mexido, cozido ou suflê', itens:[
+      'Vegetais do tipo A liberados',
+      '<b>3 ovos grandes</b>',
+      'Até <b>50 g ou 2 fatias de pão integral</b> do guia de marcas <span class="q">ou até 60 g de bolachas de arroz ou lentilha, ou torradas</span>'
+    ]},
+    { t:'Sanduíche com patê', itens:[
+      'Vegetais liberados',
+      'Até <b>50 g ou 2 fatias de pão integral</b> do guia de marcas <span class="q">ou até 60 g de bolachas ou torradas</span>',
+      'Pastinha com <b>30 g de queijo</b> da lista de compras + <b>50–60 g de frango desfiado</b> ou atum lavado',
+      'Frutas vermelhas liberadas ou <b>½ porção de frutas</b>'
+    ]},
+    { t:'Bowl de iogurte', itens:[
+      '<b>200 g de skyr</b> ou iogurte grego natural',
+      '<b>20 g de granola sem açúcar</b> ou 20 g de farelo de aveia',
+      '<b>1 porção de frutas</b>',
+      '<b>2 g de chia</b>',
+      'Opcional: <b>2 g de psyllium</b>'
+    ]}
+  ],
+  notas:[
+    ['why','Escolha das frutas','Prefira frutas de baixo índice glicêmico: maçã, pera, ameixa, melancia, melão e mamão.'],
+    ['warn','Limite de farináceos','Não consumir farináceos (farinha de trigo) mais de 2×/dia. Some o pão do café com o do lanche antes de repetir.']
+  ]
+};
+
+const ALMOCO = {
+  id:'almoco', time:'12:00', min:720, name:'Almoço', tag:'salada antes',
+  intro:'Comece com um prato de salada antes da refeição. Pode escolher vegetais frios ou quentes e misturar quantos itens quiser — quanto mais vegetais do tipo A, menor o índice glicêmico do prato.',
+  opcoes:[
+    { t:'Estrutura do prato', itens:[
+      'Vegetais liberados · caldo de feijão liberado · molho de tomate liberado',
+      'Temperar com <b>cúrcuma e pimenta preta</b>, na mesma proporção',
+      '<b>Carboidratos: 100–150 g</b> <span class="q">arroz integral, quinoa, batata-doce, mandioca, inhame ou, ocasionalmente, macarrão integral</span>',
+      'Pode dividir essa porção com leguminosas — feijão, soja, grão-de-bico, lentilha, ervilha — ou usar só as leguminosas',
+      '<b>Proteínas: 80–100 g</b> de proteína magra <span class="q">ver lista de compras</span>'
+    ]}
+  ],
+  notas:[
+    ['prep','Opcionais do almoço e do jantar','15–20 g de chocolate 70% zero · 4 ml de azeite · 1 colher de sopa de abacate · ou um pouco mais de carboidrato na refeição.'],
+    ['why','Por que cúrcuma com pimenta','A pimenta preta aumenta muito a absorção da curcumina. Por isso a orientação de usar as duas na mesma proporção.']
+  ]
+};
+
+const LANCHE = {
+  id:'lanche', time:'17:30', min:1050, name:'Lanche da tarde', tag:'monte com a regra do dia',
+  regra:{
+    treino:'Escolha <b>2 opções de proteína + 2 de carboidrato</b>.',
+    descanso:'Escolha <b>2 opções de proteína, 1 de carboidrato e 1 de gordura</b>.'
+  },
+  grupos:[
+    { g:'Proteína', k:'PTN', itens:[
+      '<b>100 g</b> de skyr ou iogurte grego',
+      '<b>10–15 g</b> de whey isolado original ou vegetal do guia de marcas',
+      '<b>40 g</b> de peito de frango ou atum enlatado <span class="q">opcional misturar com 30 g de queijo fresco</span>',
+      '<b>400 ml</b> de leite desnatado <span class="q">ocasionalmente</span>'
+    ]},
+    { g:'Carboidrato', k:'CHO', itens:[
+      'Até <b>25 g ou 1 fatia</b> de pão integral do guia de marcas',
+      'Até <b>30 g</b> de bolachas de arroz ou lentilha, ou torradas',
+      '<b>30 g</b> de cookies integrais',
+      '<b>1 porção de frutas</b>'
+    ]},
+    { g:'Gordura', k:'LIP', itens:[
+      '<b>16 g</b> de frutas oleaginosas <span class="q">ver tabela de porções</span>',
+      '<b>8 ml</b> de azeite extravirgem',
+      '<b>100 ml</b> de leite de coco',
+      '<b>30 g</b> de queijos amarelos <span class="q">uso ocasional</span>'
+    ]}
+  ],
+  notas:[
+    ['prep','Atalho que cobre proteína e gordura','3 ovos grandes inteiros cobrem, ao mesmo tempo, a demanda de gordura e de proteína da refeição.'],
+    ['prep','Repetir proteína é permitido','As opções de proteína podem ser repetidas.'],
+    ['warn','Limite de farináceos','Não consumir farináceos (farinha de trigo) mais de 2×/dia.']
+  ]
+};
+
+const JANTAR = {
+  id:'jantar', time:'21:00', min:1260, name:'Jantar', tag:'30 min após o treino',
+  opcoes:[
+    { t:'Opções do almoço', itens:['Mesma estrutura do almoço: salada, vegetais, 100–150 g de carboidrato e 80–100 g de proteína magra.'] },
+    { t:'Sanduíche do café da manhã', itens:['A mesma montagem da opção 2 do café da manhã.'] },
+    { t:'Smoothie', itens:[
+      '<b>100 ml</b> de leite com menos de 1,5% de gordura ou leite vegetal <b>+ 5 g de whey</b> original ou vegetal',
+      '<b>25 g de whey isolado</b> original ou vegetal do guia de marcas',
+      '<b>1 porção de frutas</b>',
+      '<b>16 g</b> de oleaginosas <span class="q">ou 20 g de farelo de aveia, ou 20 g de granola sem açúcar</span>',
+      'Opcional: pitada de gengibre em pó',
+      'Opcional: <b>2 g de psyllium</b>'
+    ]}
+  ],
+  notas:[
+    ['why','Horário','Nos dias com treino, 30 minutos após o término. Nos dias sem treino, no horário habitual do jantar.']
+  ]
+};
+
+const FOME = {
+  id:'fome', time:'—', min:1380, name:'Se sentir fome', tag:'lista livre',
+  opcoes:[
+    { t:'Opções liberadas', itens:[
+      'Chás', 'Gelatinas sem açúcar', 'Refresco de maracujá ou limão',
+      'Frutas vermelhas', 'Kombucha', 'Yakult sem açúcar'
+    ]}
+  ],
+  notas:[]
+};
+
+const MEALS = {
+  treino:   [CAFE, ALMOCO, LANCHE, JANTAR, FOME],
+  descanso: [CAFE, ALMOCO, LANCHE, Object.assign({}, JANTAR, {time:'20:00', min:1200, tag:'horário habitual'}), FOME]
+};
+
+const TRAIN = {
+  treino: { time:'20:00', min:1200, dur:40, nome:'Musculação + corrida' },
+  descanso: null
+};
+
+/* ===================== SUPLEMENTOS ===================== */
+
+const SUPS = [
+  { n:'Condricart Ultrapower', d:'1 dose por dia', q:'Junto ao café da manhã e longe de grandes refeições.',
+    p:'Ossos, cartilagens e tendões.' },
+  { n:'Psyllium', d:'2 g por dia', q:'Longe da suplementação de vitaminas e minerais.',
+    p:'Saciedade, regulação intestinal e controle do colesterol.' },
+  { n:'Venvanse', d:'30 mg por dia', q:'Em jejum (efeito mais intenso) ou junto ao café da manhã. <b>Nunca tomar junto de magnésio.</b>',
+    p:'Atenção, foco, motivação, controle de impulsos e organização mental.', med:true },
+  { n:'Cápsulas manipuladas', d:'1 dose por dia', q:'Junto do almoço ou do jantar.',
+    p:'Aumento de testosterona.', med:true },
+  { n:'Ômega-3', d:'500 mg a 1 g de EPA + DHA somados', q:'1 vez ao dia. Opcional.',
+    p:'Reduzir inflamações, proteger o coração, melhorar humor e função cerebral.' },
+  { n:'Picolinato de cromo', d:'100 mcg, 2 vezes ao dia', q:'30 minutos antes do almoço e do jantar. Opcional tomar com vitamina C.',
+    p:'Potencializa a ação da insulina e regula o metabolismo de carboidratos, gorduras e proteínas.' },
+  { n:'Magnésio + Glutamina', d:'1 sachê por dia', q:'Cerca de 1 h antes de dormir, longe das refeições.',
+    p:'Relaxamento, cãibras, dores musculares e intestino.' }
+];
+
+/* ===================== TABELAS ===================== */
+
+const VEG = {
+  a:{ t:'Tipo A — livre', c:'a', l:'Abobrinha, acelga, agrião, aipo, alcaparra, alface, almeirão, alho, alho-poró, aspargo, berinjela, bertalha, bredo, brócolis, chicória, couve, espinafre, rúcula, brotos em geral, chuchu, couve-flor, cogumelos, cebola, jiló, palmito, pepino, pimentão, repolho, rabanete, tomate, quiabo.' },
+  b:{ t:'Tipo B — sem excessos', c:'b', l:'Abóbora, alcachofra, beterraba, cenoura, vagem, milho e ervilha.' },
+  c:{ t:'Tipo C — com cuidado', c:'c', l:'Batata baroa, batata inglesa, batata-doce, inhame e mandioca. <b>Substituem cereais como o arroz.</b>' }
+};
+
+const OLEAG = [
+  ['Abacate','2 col. sopa','60 g'], ['Amêndoas','15 unidades','16 g'],
+  ['Azeitona','14 unidades','60 g'], ['Amendoim','19 unidades','16 g'],
+  ['Avelã','14 unidades','16 g'], ['Castanha de caju','7 unidades','16 g'],
+  ['Castanha-do-pará','4 unidades','16 g'], ['Coco','1 col. sopa','28 g'],
+  ['Gergelim','2 col. sopa','15 g'], ['Nozes','3 unidades','16 g'],
+  ['Pasta de amendoim','1 col. sopa','15 g'], ['Pistache','26 unidades','15 g']
+];
+
+const FRUTAS = [
+  ['Abacaxi','2 rodelas','200 g'], ['Acerola','23 unidades','280 g'],
+  ['Ameixa preta fresca','3 unidades','200 g'], ['Amora','2½ xícaras','230 g'],
+  ['Banana','1 unidade','100 g'], ['Cajá','2,5 unidades','200 g'],
+  ['Caju','2 unidades G','200 g'], ['Caqui','1 unidade M','130 g'],
+  ['Cereja','10 unidades','200 g'], ['Damasco fresco','9 unidades','120 g'],
+  ['Damasco seco','4 unidades','40 g'], ['Figo seco','2 unidades','60 g'],
+  ['Fruta do conde','1 unidade G','100 g'], ['Goiaba','1 unidade M','100 g'],
+  ['Goji berry seca','20 unidades','30 g'], ['Jaca','12 bagos','100 g'],
+  ['Kiwi','2 unidades M','100 g'], ['Laranja','1 unidade M','200 g'],
+  ['Lichia','15 unidades P','140 g'], ['Maçã Fuji','1 unidade M','200 g'],
+  ['Mamão','1 fatia grande','200 g'], ['Mamão papaia','1 unidade P','200 g'],
+  ['Manga coração de boi','½ unidade','100 g'], ['Melancia sem casca','1 fatia grande','700 g'],
+  ['Melão','3 fatias grandes','300 g'], ['Morango','20 unidades M','300 g'],
+  ['Nêspera','4 unidades','200 g'], ['Pera','1 unidade M','100 g'],
+  ['Pêssego','2 unidades G','100 g'], ['Pitanga','3 unidades','—'],
+  ['Romã','3 unidades','100 g'], ['Tangerina','1 unidade M','200 g'],
+  ['Uva','32 pequenas ou 10 grandes','150 g']
+];
+
+/* ===================== LISTA DE COMPRAS ===================== */
+
+const SHOP = [
+  ['Vegetais', [
+    ['Todos os que quiser, em grandes quantidades','desde que sejam gostosos'],
+    ['Folhas: alface, agrião, acelga, chicória, rúcula',''],
+    ['Abobrinha, berinjela, chuchu, jiló, pepino',''],
+    ['Brócolis, couve-flor, repolho',''],
+    ['Cebola, alho, alho-poró, aspargo',''],
+    ['Tomate, pimentão, palmito, cogumelos, rabanete',''],
+    ['Abóbora, alcachofra, beterraba, cenoura','tipo B — sem excessos']
+  ]],
+  ['Carnes e peixes', [
+    ['Carne bovina magra','acém, patinho, alcatra, filé mignon, coxão mole ou músculo'],
+    ['Frango','peito ou sobrecoxa'],
+    ['Carne suína magra','lombo ou filé-mignon suíno'],
+    ['Peixes','bacalhau, linguado, panga ou robalo']
+  ]],
+  ['Queijos e iogurtes', [
+    ['Cottage, ricota, Minas frescal',''],
+    ['Mozzarella light, quark, queijo fresco',''],
+    ['Queijo de cabra ou parmesão light',''],
+    ['Skyr ou quark','poucos ingredientes, alto teor de proteína']
+  ]],
+  ['Chás', [
+    ['Hibisco, cavalinha, feno-grego, rosa mosqueta ou chá verde','1 col. sopa para 400 ml · até 700 ml/dia'],
+    ['Chás termogênicos ou para inchaço','consultar antes de comprar']
+  ]],
+  ['Temperos e molhos', [
+    ['Vinagre ou balsâmico','doce ou salgado'],
+    ['Limão',''],
+    ['Azeite extravirgem','não exagerar'],
+    ['Gengibre, alho, cúrcuma e pimenta preta','boosters metabólicos']
+  ]],
+  ['Óleos e gorduras', [
+    ['Azeite extravirgem ou óleo de gergelim','grelhar até 75 °C e fritar até 180 °C'],
+    ['Óleo de linhaça','grelhar'],
+    ['Óleo de girassol orgânico ou de milho','fritar e forno 180–230 °C'],
+    ['Óleo de coco ou banha','fritar']
+  ]],
+  ['Farinhas', [
+    ['Farinha de grão-de-bico, feijão, lentilha, ervilha ou soja','para bolos e receitas salgadas']
+  ]],
+  ['Frutas', [
+    ['Maçã, pera, ameixa fresca','baixo índice glicêmico'],
+    ['Mamão, melão, melancia','baixo índice glicêmico'],
+    ['Banana, maracujá, frutas vermelhas',''],
+    ['Limão, kiwi ou acerola','']
+  ]],
+  ['Sementes e nozes', [
+    ['Sementes de girassol e pepitas',''],
+    ['Chia e linhaça','comprar inteiras e moer em casa para evitar oxidação']
+  ]]
+];
+
+/* ===================== GUIA DE MARCAS (BRASIL) ===================== */
+
+const MARCAS = [
+  ['Pães sem farinha branca', [
+    '7 Grãos linha Integral, Panco','Linha Integral Total, Panco',
+    '12 Grãos linha Fit, Plus Vita','Cenoura linha Fit, Plus Vita',
+    'Mais Fibras linha Supreme, Nutrella','Farinha 100% Integral linha Supreme, Nutrella',
+    '14 Grãos, Nutrella','Grãos e Castanhas, Nutrella','Torradas Integrais, Nutrella',
+    'Original linha Integral, Pullman','12 Grãos linha Integral, Pullman','12 Grãos linha Fit, Pullman'
+  ]],
+  ['Iogurtes e bebidas lácteas', [
+    'Preferir os com menos ingredientes, menos gordura e mais proteína',
+    'Atti Latte — linhas light e sem gordura','Batavo — linha Pense Zero',
+    'Danone — Densia','Nestlé — linha Molico TotalCálcio','Grego Light Vigor'
+  ]],
+  ['Iogurtes sem lactose', [
+    'Batavo Naturis Soja','Casa da Ovelha sem lactose','Danubio sem lactose',
+    'Verde Campo Lacfree','Activia Nestlé natural sem lactose'
+  ]],
+  ['Bebidas de whey — pré ou pós-treino', [
+    'Piracanjuba (preferência)','Natural Whey Verde Campo'
+  ]],
+  ['Bebidas de whey — qualquer horário', [
+    'Italac','Parmalat','Not Shake Protein NotCo','+Mu','Itambé'
+  ]],
+  ['Whey protein', [
+    '100% Whey Gold Standard Optimum — 30 g (preferência, concentrado)',
+    'Performance Whey Isolate Optimum (preferência)',
+    'Whey Protein Isolate Growth — 30 g',
+    'Isofusion Gaspari Nutrition — 30 g',
+    'Whey Protein Isolate Now Sports — 30 g'
+  ]],
+  ['Whey vegano / proteína de ervilha', [
+    'Now Foods','Vega Sport','Rakkau','Growing Naturals','Garden of Life'
+  ]],
+  ['Blends de proteína', [
+    'Blend Whey Vitafor','Pro Complex ON','Protein Complex New Millen',
+    'Combat Protein Musclepharm','Whey Blend Max Titanium','Six Protein Growth'
+  ]],
+  ['Creatina', [ 'ON','Dymatize','Vitafor','AllMax Nutrition','Now Foods','Jarrow Fórmulas' ]],
+  ['Ômega 3', [
+    'Fish Oil Softgels Optimum','Fish Oil Ultra EPA-DHA Bodybuilding',
+    'Platinum 100% Fish Oil MuscleTech','Omega-3 Fish Oil Natrol','Ultra Omega-3 Now',
+    'ÔmegaFor Plus Vitafor','Fish Oil Barlean\u2019s','Balanced Ômega Naturalis',
+    'Super Omega-3 Essential','Óleo de peixe Ômega 3 Naturalis'
+  ]],
+  ['Glutamina', [
+    'Now Foods','Glutamine Recovery Performance','Jarrow Fórmulas','AllMax Nutrition','Essential'
+  ]],
+  ['BCAA', [
+    'Mega Size BCAA Optimum (preferência)','Best BCAA BPI Sports','Amino Build MuscleTech',
+    'Amino Recovery Bodybuilding.com','PO BCAA Optimum','BCAA Complex 5050 Dymatize',
+    'BCAA Powder Bodybuilding.com','Aminocore AllMax Nutrition','N\u2019gage Axis Labs',
+    'BCAA Power Powder Labrada','BCAA Stack Universal','BCAA Peak Inner Armour'
+  ]],
+  ['Barras de proteína — ao longo do dia', [
+    '53% Platinum Bar Multipower (preferência)',
+    'Power Crunch — creme french vanilla, peanut butter creme, triple chocolate, cookies & cream',
+    'Herbalife — chocolate peanut brownie',
+    'Quest Bar — mocha chocolate chip, oatmeal chocolate chip, cookies & cream, double chocolate chunk, chocolate brownie, peanut butter',
+    'Age — amendoim com caramelo','Exceed Low GI — milk toffee, lemon toffee','Popai (vegana)',
+    'Supino Protein Max — chocolate, baunilha com crispies','Fit Way Bar — chocolate, castanha',
+    'Pro Vit 3D Trio — chocolate, cookies & cream, banana, amendoim',
+    'Probene pw10 — limão, chocolate alpino, chocolate com amendoim',
+    'Veg Bar Protein — chocolate ou morango (vegana)'
+  ]],
+  ['Barras de proteína — pré ou pós-treino', [
+    'Hart\u2019s Natural Move — limão ou cacau','Veg Bar Protein — chocolate ou morango',
+    'Dr. Mercola Protein Bar','B-On — flow, baunilha e frutas secas, ou Workout de limão',
+    'Popai','VeganPro Bar Nutrify'
+  ]],
+  ['Barras de frutas', [ 'Harts','Bio2 Fruits','Biosoft','Natura Vita' ]],
+  ['Mix de castanhas e frutas', [ 'Harts','Bio2 Fruits','Nuts-bar','Airon','Frutolla' ]],
+  ['Chocolates', [
+    'Chocolate sem açúcar Svili — 1 a 2 tabletinhos',
+    'Vitao zero meio amargo 22 g ou zero ao leite 30 g',
+    'Barra Classic Zero Nestlé','Trufa Zero Açúcar Cacau Show'
+  ]],
+  ['Cookies integrais', [
+    'Jamine — linha sem glúten, só farinha integral',
+    'Kobber — linhas de cookies integrais e de granola',
+    'Mãe Terra — linhas diet e light','Vitao — linha com baixo teor de açúcares',
+    'GoodSoy — linha sem glúten'
+  ]],
+  ['Doces', [ 'Hué — pé de moleque diet, goiabada diet, cocada diet ou paçoquita diet' ]],
+  ['Claras de ovos pasteurizadas', [ 'Maxxi Ovos — se em pó, 2 col. sopa substituem 7 ovos' ]],
+  ['Sucos industrializados', [ 'Do Bem','Feel Good','Natural One','Green Day' ]],
+  ['Palatinose', [ 'Vegan Way','Athletica','Carbolift Essential','Black Skull','Max Titanium' ]],
+  ['Levedura nutricional', [ 'Vegan Way','Now Foods','Red Star' ]],
+  ['Termogênicos liberados', [
+    'Termoplus Vitafor','JuicedUp Nutrify','Hydroxycut Hardcore Elite MuscleTech','Ripped Fuel Twinlab'
+  ]],
+  ['Termogênicos arriscados', [
+    'NO-Xplode Rush BSN','Évora PW Integral Médica','C4 Cellucor'
+  ]]
+];
+
+/* ===================== ESTADO ===================== */
+
+let dayType = DB.get('dayType','treino');
+let view = 'agora';
+let marcaFiltro = '';
+const meals = () => MEALS[dayType];
+const nowMin = () => { const d = new Date(); return d.getHours()*60 + d.getMinutes(); };
+
+/* ===================== RENDER ===================== */
+
+const ICO = { why:'?', prep:'✓', warn:'!' };
+function accs(list){
+  if(!list || !list.length) return '';
+  return list.map(([type,title,html])=>`
+    <details class="acc ${type}">
+      <summary><span class="ico">${ICO[type]}</span>${title}<span class="plus">+</span></summary>
+      <div class="inner">${html}</div>
+    </details>`).join('');
+}
+
+function mealHTML(m){
+  let h = '';
+  if (m.intro) h += `<p class="lede">${m.intro}</p>`;
+
+  if (m.id === 'lanche'){
+    h += `<div class="card" style="border-color:var(--green);background:var(--green-soft);">
+      <div class="eyebrow" style="color:var(--green)">Regra de hoje</div>
+      <p style="margin:8px 0 0;font-size:15.5px;">${m.regra[dayType]}</p>
+    </div>`;
+    m.grupos.forEach(g=>{
+      h += `<div class="opt"><h4><span class="n">${g.k}</span>${g.g}</h4><ul>`
+        + g.itens.map(i=>`<li>${i}</li>`).join('') + `</ul></div>`;
+    });
+  } else if (m.opcoes){
+    m.opcoes.forEach((o,i)=>{
+      if (i>0 && m.opcoes.length>1) h += `<div class="orsep"><span>ou</span></div>`;
+      h += `<div class="opt"><h4>${m.opcoes.length>1?`<span class="n">${i+1}</span>`:''}${o.t}</h4><ul>`
+        + o.itens.map(x=>`<li>${x}</li>`).join('') + `</ul></div>`;
+    });
+  }
+  h += accs(m.notas);
+  return h;
+}
+
+function renderAgora(){
+  const list = meals(), t = nowMin();
+  let current = null, next = null;
+  for (let i=0;i<list.length;i++){
+    const end = list[i+1] ? list[i+1].min : 1440;
+    if (t >= list[i].min && t < end){ current = list[i]; next = list[i+1] || null; break; }
+  }
+  if (!current && t < list[0].min) next = list[0];
+
+  let h = '';
+  if (current){
+    h += `<div class="card now">
+      <div class="eyebrow">Refeição atual</div>
+      <h2>${current.name}</h2>
+      <div class="when">${current.time !== '—' ? 'previsto para '+current.time : 'a qualquer hora'}${current.tag?' · '+current.tag:''}</div>
+      <button class="btn" data-meal="${current.id}">Ver o que comer</button>
+    </div>`;
+  } else {
+    h += `<div class="card now">
+      <div class="eyebrow">O dia ainda não começou</div>
+      <h2>Primeira refeição às ${list[0].time}</h2>
+      <div class="when">${dayType==='treino'?'dia com treino':'dia sem treino'}</div>
+      <button class="btn" data-meal="cafe">Ver o café da manhã</button>
+    </div>`;
+  }
+
+  if (next){
+    h += `<button class="next" data-meal="${next.id}">
+      <span class="k">a seguir</span><span class="t">${next.time}</span><span class="n">${next.name}</span>
+    </button>`;
+  }
+
+  const tr = TRAIN[dayType];
+  if (tr){
+    const trNow = t >= tr.min && t < tr.min + tr.dur;
+    h += `<div class="trainrow"><span class="t">${tr.time}</span>
+      <span class="n">${tr.nome}</span>
+      <span class="k">${trNow?'agora':'30–40 min + 30 de corrida'}</span></div>`;
+  }
+
+  h += `<div class="card">
+    <div class="eyebrow q">Lembretes do plano</div>
+    <ul style="margin:10px 0 0;padding-left:18px;font-size:15px;line-height:1.7;">
+      <li>Farináceos: no máximo <b>2×/dia</b></li>
+      <li>Salada <b>antes</b> do almoço e do jantar</li>
+      <li>Cúrcuma e pimenta preta na mesma proporção</li>
+      <li>Frutas de baixo índice glicêmico como padrão</li>
+    </ul>
+  </div>`;
+
+  document.getElementById('v-agora').innerHTML = h;
+}
+
+function renderRefeicoes(){
+  const list = meals(), t = nowMin();
+  let h = `<p class="lede">${dayType==='treino'
+    ? 'Dia com treino: musculação às 20h, 30–40 min, mais 30 min de corrida depois.'
+    : 'Dia sem treino: o lanche muda de regra e o jantar volta ao horário habitual.'}</p>`;
+
+  const tr = TRAIN[dayType];
+  list.forEach((m,i)=>{
+    const end = list[i+1] ? list[i+1].min : 1440;
+    const isNow = t >= m.min && t < end;
+    h += `<button class="mealrow ${isNow?'now-row':''}" data-meal="${m.id}">
+      <span class="time">${m.time}</span>
+      <span class="body"><b>${m.name}${isNow?'<span class="tagnow">agora</span>':''}</b><span>${m.tag||''}</span></span>
+      <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </button>`;
+    if (tr && tr.min >= m.min && tr.min < end){
+      h += `<div class="trainrow"><span class="t">${tr.time}</span>
+        <span class="n">${tr.nome}</span><span class="k">30–40 min</span></div>`;
+    }
+  });
+  document.getElementById('v-refeicoes').innerHTML = h;
+}
+
+function renderCompras(){
+  const st = DB.get('shop',{});
+  let h = `<p class="lede">A lista mostra os tipos e qualidades que costumam ser as melhores escolhas. Marque conforme comprar — fica salvo no aparelho.</p>`;
+  SHOP.forEach(([grp,items])=>{
+    const marked = items.filter((_,i)=>st[grp+'|'+i]).length;
+    h += `<div class="grp ${marked===items.length?'full':''}">
+      <h3>${grp}<span class="c">${marked}/${items.length}</span></h3><ul>`;
+    items.forEach(([n,q],i)=>{
+      const k = grp+'|'+i;
+      h += `<li><label><input type="checkbox" data-shop="${k}" ${st[k]?'checked':''}>
+        <span>${n}${q?`<span class="qty">${q}</span>`:''}</span></label></li>`;
+    });
+    h += `</ul></div>`;
+  });
+  h += `<button class="btn quiet" id="clearShop">Desmarcar tudo</button>`;
+  document.getElementById('v-compras').innerHTML = h;
+}
+
+function renderMarcas(){
+  const f = marcaFiltro.trim().toLowerCase();
+  let h = `<input class="search" id="mSearch" type="search" placeholder="Buscar marca ou categoria"
+    value="${marcaFiltro.replace(/"/g,'&quot;')}" autocomplete="off">`;
+  let achou = 0;
+  MARCAS.forEach(([cat, itens])=>{
+    const catHit = cat.toLowerCase().includes(f);
+    const lista = f ? (catHit ? itens : itens.filter(i=>i.toLowerCase().includes(f))) : itens;
+    if (!lista.length) return;
+    achou++;
+    h += `<div class="opt"><h4>${cat}</h4><ul>` + lista.map(i=>`<li>${i}</li>`).join('') + `</ul></div>`;
+  });
+  if (!achou) h += `<p class="lede">Nada encontrado para “${marcaFiltro}”.</p>`;
+  h += `<div class="foot">Guia de marcas — seção Brasil. As seções da Alemanha e dos Estados Unidos do documento original não foram incluídas.</div>`;
+  document.getElementById('v-marcas').innerHTML = h;
+}
+
+const GUIDE = {
+  sup:{ title:'Suplementos', html:
+    `<p class="lede">Conforme as notas do plano alimentar. Horários e combinações importam — alguns têm restrição explícita.</p>`
+    + SUPS.map(s=>`<div class="opt">
+        <h4>${s.n}${s.med?' <span class="chip c" style="font-size:9px;">prescrição</span>':''}</h4>
+        <ul>
+          <li><b>${s.d}</b></li>
+          <li>${s.q}</li>
+          <li class="q">${s.p}</li>
+        </ul></div>`).join('')
+    + accs([['warn','Dois itens não são suplementos',
+      'O <b>Venvanse</b> (lisdexanfetamina) é medicamento controlado, de prescrição obrigatória, e não um suplemento — o uso depende de receita e acompanhamento médico. As <b>cápsulas manipuladas para testosterona</b> também exigem prescrição e não têm composição declarada no documento. Confirme os dois com quem prescreveu antes de usar.']]) },
+
+  veg:{ title:'Vegetais por tipo', html:
+    `<p class="lede">Quanto maior a proporção do tipo A no prato, menor o índice glicêmico da refeição.</p>`
+    + Object.values(VEG).map(v=>`<div class="opt">
+        <h4><span class="chip ${v.c}">${v.t.split('—')[1].trim()}</span>${v.t.split('—')[0].trim()}</h4>
+        <p style="margin:0;font-size:15px;line-height:1.6;">${v.l}</p></div>`).join('') },
+
+  oleag:{ title:'Porções de oleaginosas', html:
+    `<p class="lede">Uma porção de gordura no lanche equivale a 16 g. Use esta tabela para converter em unidades.</p>
+    <div class="card"><table><tr><th>Item</th><th class="n">Medida</th><th class="n">Peso</th></tr>`
+    + OLEAG.map(([a,b,c])=>`<tr><td>${a}</td><td class="n">${b}</td><td class="n">${c}</td></tr>`).join('')
+    + `</table></div>` },
+
+  frutas:{ title:'Porções de frutas', html:
+    `<p class="lede">Uma porção corresponde à medida indicada. Prefira as de baixo índice glicêmico: maçã, pera, ameixa, melancia, melão e mamão.</p>
+    <div class="card"><table><tr><th>Fruta</th><th class="n">Medida</th><th class="n">Peso</th></tr>`
+    + FRUTAS.map(([a,b,c])=>`<tr><td>${a}</td><td class="n">${b}</td><td class="n">${c}</td></tr>`).join('')
+    + `</table></div>` },
+
+  treino:{ title:'Treino e regras gerais', html:
+    `<div class="opt"><h4>Modalidade</h4><ul>
+      <li><b>Musculação</b> — 3 a 4×/semana, 30–40 min, às 20h00</li>
+      <li><b>Corrida pós-treino</b> — 30 minutos</li>
+    </ul></div>`
+    + `<div class="opt"><h4>Regras que atravessam o plano</h4><ul>
+      <li>Farináceos (farinha de trigo): no máximo <b>2×/dia</b></li>
+      <li>Salada <b>antes</b> do almoço e do jantar</li>
+      <li>Cúrcuma e pimenta preta <b>na mesma proporção</b></li>
+      <li>Frutas de <b>baixo índice glicêmico</b> como padrão</li>
+      <li>Chás: 1 col. sopa para 400 ml, até <b>700 ml/dia</b></li>
+      <li>Azeite: usar, mas <b>sem exagerar</b></li>
+    </ul></div>`
+    + `<div class="opt"><h4>Temperaturas de cozimento</h4><ul>
+      <li><b>Grelhar até 75 °C</b> — azeite extravirgem, óleo de gergelim ou de linhaça</li>
+      <li><b>Fritar até 180 °C</b> — azeite, gergelim, girassol orgânico, milho, coco ou banha</li>
+      <li><b>Forno 180–230 °C</b> — girassol orgânico ou milho</li>
+    </ul></div>` }
+};
+
+function renderGuia(){
+  const it = [
+    ['sup','Suplementos','O que tomar, quando e com o quê'],
+    ['veg','Vegetais por tipo','A livre · B sem excessos · C com cuidado'],
+    ['oleag','Porções de oleaginosas','Converter 16 g em unidades'],
+    ['frutas','Porções de frutas','O que conta como 1 porção'],
+    ['treino','Treino e regras gerais','Modalidade, horários e limites']
+  ];
+  let h = `<div class="menu">`;
+  it.forEach(([k,t,s])=>{
+    h += `<button data-guide="${k}"><span class="body">${t}<span class="sub">${s}</span></span>
+      <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>`;
+  });
+  h += `</div>
+  <div class="foot">
+    <b>Plano alimentar — Gláucio Gonçalves.</b> Conteúdo transcrito do plano, da lista de compras e do guia de marcas elaborados por Marina Morgado, MSc. em Ciências da Nutrição.<br><br>
+    Apenas o conteúdo em português foi incluído. As seções do guia de marcas referentes à Alemanha e aos Estados Unidos ficaram de fora.<br><br>
+    Este app é uma forma de consultar o plano no celular. Qualquer mudança de conduta, dose ou suplemento deve ser tratada diretamente com a nutricionista ou com um médico.
+  </div>`;
+  document.getElementById('v-guia').innerHTML = h;
+}
+
+/* ===================== SHEET E NAVEGAÇÃO ===================== */
+
+const sheet = document.getElementById('sheet');
+function openSheet(title, html){
+  document.getElementById('sheetTitle').textContent = title;
+  document.getElementById('sheetBody').innerHTML = html;
+  document.getElementById('sheetBody').scrollTop = 0;
+  sheet.classList.add('open');
+  sheet.setAttribute('aria-hidden','false');
+  history.pushState({sheet:true},'');
+}
+function closeSheet(){ sheet.classList.remove('open'); sheet.setAttribute('aria-hidden','true'); }
+
+function openMeal(id){
+  const m = meals().find(x=>x.id===id);
+  if (!m) return;
+  openSheet(m.name, mealHTML(m));
+}
+
+const TITLES = { agora:'Hoje', refeicoes:'Refeições', compras:'Compras', marcas:'Marcas', guia:'Guia' };
+function go(v){
+  view = v;
+  document.querySelectorAll('.view').forEach(s=>s.classList.remove('active'));
+  document.getElementById('v-'+v).classList.add('active');
+  document.querySelectorAll('.tabbar button').forEach(b=>{
+    if (b.dataset.go===v) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current');
+  });
+  document.getElementById('viewTitle').textContent = TITLES[v];
+  document.getElementById('dayWrap').hidden = !(v==='agora' || v==='refeicoes');
+  document.getElementById('main').scrollTop = 0;
+  if (v==='agora') renderAgora();
+  if (v==='refeicoes') renderRefeicoes();
+}
+
+function renderTop(){
+  const d = new Date();
+  const dias = ['dom','seg','ter','qua','qui','sex','sáb'];
+  const mes = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const hh = String(d.getHours()).padStart(2,'0'), mm = String(d.getMinutes()).padStart(2,'0');
+  document.getElementById('todayLabel').textContent =
+    `${dias[d.getDay()]}, ${d.getDate()} ${mes[d.getMonth()]} · ${hh}:${mm}`;
+}
+
+function setDay(type){
+  if (!MEALS[type]) type = 'treino';
+  dayType = type; DB.set('dayType', type);
+  document.querySelectorAll('#dayWrap [data-day]').forEach(b=>
+    b.setAttribute('aria-pressed', String(b.dataset.day === type)));
+  renderTop(); renderAgora(); renderRefeicoes();
+}
+
+document.addEventListener('click', (e)=>{
+  const tab = e.target.closest('.tabbar button');
+  if (tab){ go(tab.dataset.go); return; }
+
+  const day = e.target.closest('#dayWrap [data-day]');
+  if (day){ setDay(day.dataset.day); return; }
+
+  const meal = e.target.closest('[data-meal]');
+  if (meal){ openMeal(meal.dataset.meal); return; }
+
+  const g = e.target.closest('[data-guide]');
+  if (g){ const s = GUIDE[g.dataset.guide]; openSheet(s.title, s.html); return; }
+
+  if (e.target.closest('#sheetBack')){ history.back(); return; }
+  if (e.target.closest('#clearShop')){ DB.set('shop',{}); renderCompras(); return; }
+});
+
+document.addEventListener('change', (e)=>{
+  const cb = e.target.closest('[data-shop]');
+  if (!cb) return;
+  const st = DB.get('shop',{});
+  if (cb.checked) st[cb.dataset.shop]=1; else delete st[cb.dataset.shop];
+  DB.set('shop', st);
+  renderCompras();
+});
+
+document.addEventListener('input', (e)=>{
+  if (e.target && e.target.id === 'mSearch'){
+    marcaFiltro = e.target.value;
+    const pos = e.target.selectionStart;
+    renderMarcas();
+    const el = document.getElementById('mSearch');
+    if (el){ el.focus(); try{ el.setSelectionRange(pos,pos); }catch(_){} }
+  }
+});
+
+window.addEventListener('popstate', ()=>{ if (sheet.classList.contains('open')) closeSheet(); });
+document.addEventListener('visibilitychange', ()=>{ if (!document.hidden){ renderTop(); renderAgora(); renderRefeicoes(); } });
+setInterval(()=>{ renderTop(); if (view==='agora') renderAgora(); }, 60000);
+
+setDay(dayType);
+renderCompras();
+renderMarcas();
+renderGuia();
+go('agora');
+
+if ('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
